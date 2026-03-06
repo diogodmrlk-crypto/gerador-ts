@@ -4,8 +4,12 @@
   "framework": null,
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/loader.html"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/loader.html"
     }
   ]
 }

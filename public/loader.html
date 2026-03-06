@@ -53,17 +53,20 @@
             
             // Carregar app.json e renderizar
             window.addEventListener('DOMContentLoaded', () => {
-                fetch('/app.json')
-                    .then(r => r.json())
-                    .then(data => {
-                        const root = document.getElementById('root');
-                        root.innerHTML = data.html;
-                        document.getElementById('loading').style.display = 'none';
-                    })
-                    .catch(err => {
-                        console.error('Erro:', err);
-                        document.getElementById('root').innerHTML = '<h1>Erro ao carregar aplicação</h1>';
-                    });
+                Promise.all([
+                    fetch('/app.json').then(r => r.json()),
+                    fetch('/app.js').then(r => r.text())
+                ]).then(([data, jsCode]) => {
+                    const root = document.getElementById('root');
+                    root.innerHTML = data.html;
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    // Executar JavaScript
+                    eval(jsCode);
+                }).catch(err => {
+                    console.error('Erro:', err);
+                    document.getElementById('root').innerHTML = '<h1>Erro ao carregar aplicação</h1>';
+                });
             });
         })();
     </script>
