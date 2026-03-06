@@ -4,9 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f7; }
+    </style>
 </head>
 <body>
-    <!-- Este arquivo é apenas um placeholder -->
-    <!-- Conteúdo real em: /app -->
+    <div id="app"></div>
+    <script>
+        // Carregar o app real
+        fetch('/app/index.html')
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('app').innerHTML = html;
+            })
+            .catch(() => {
+                // Fallback: redirecionar
+                window.location.href = '/app/';
+            });
+    </script>
 </body>
 </html>
