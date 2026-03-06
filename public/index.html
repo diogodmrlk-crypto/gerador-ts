@@ -2,26 +2,213 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gerador</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f7; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f0f2f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        #app { width: 100%; height: 100%; }
+        .error-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .error-screen h1 { font-size: 32px; margin-bottom: 20px; }
+        .error-screen p { font-size: 16px; opacity: 0.9; }
     </style>
 </head>
 <body>
     <div id="app"></div>
+    
     <script>
-        // Carregar o app real
-        fetch('/app/index.html')
-            .then(r => r.text())
-            .then(html => {
-                document.getElementById('app').innerHTML = html;
-            })
-            .catch(() => {
-                // Fallback: redirecionar
-                window.location.href = '/app/';
+        (function() {
+            'use strict';
+            
+            // ===== PROTEÇÃO PROFISSIONAL =====
+            
+            // 1. Verificar domínio autorizado
+            const ALLOWED_DOMAINS = [
+                'gerador-ts.vercel.app',
+                'localhost',
+                '127.0.0.1',
+                'localhost:3000',
+                'localhost:5173'
+            ];
+            
+            const currentDomain = window.location.hostname;
+            const isAllowedDomain = ALLOWED_DOMAINS.some(domain => 
+                currentDomain === domain || currentDomain.endsWith(domain)
+            );
+            
+            // 2. Detectar clonagem/arquivo local
+            const isLocalFile = window.location.protocol === 'file:';
+            const isUnauthorizedDomain = !isAllowedDomain && !isLocalFile;
+            
+            // 3. Verificar integridade do documento
+            const checkIntegrity = () => {
+                const html = document.documentElement.outerHTML;
+                // Se o HTML foi clonado, terá menos de 2KB
+                return html.length > 2000;
+            };
+            
+            // 4. Anti-debugging measures
+            const detectDevTools = () => {
+                const start = performance.now();
+                debugger;
+                const elapsed = performance.now() - start;
+                return elapsed > 100;
+            };
+            
+            // 5. Verificar localStorage integrity
+            const verifyLocalStorage = () => {
+                try {
+                    const testKey = '__integrity_check_' + Date.now();
+                    localStorage.setItem(testKey, '1');
+                    const stored = localStorage.getItem(testKey);
+                    localStorage.removeItem(testKey);
+                    return stored === '1';
+                } catch (e) {
+                    return false;
+                }
+            };
+            
+            // 6. Função para bloquear
+            const blockAccess = (reason) => {
+                console.clear();
+                document.body.innerHTML = `
+                    <div class="error-screen">
+                        <h1>⚠️ Acesso Negado</h1>
+                        <p>Este site não pode ser acessado desta forma.</p>
+                        <p style="font-size: 12px; margin-top: 20px; opacity: 0.7;">${reason}</p>
+                    </div>
+                `;
+                document.documentElement.innerHTML = document.body.innerHTML;
+                
+                // Disable all interactions
+                document.addEventListener('click', e => e.preventDefault());
+                document.addEventListener('keydown', e => e.preventDefault());
+                document.addEventListener('contextmenu', e => e.preventDefault());
+                
+                // Stop all scripts
+                throw new Error('Access Denied');
+            };
+            
+            // 7. Executar verificações
+            if (isUnauthorizedDomain) {
+                blockAccess('Domínio não autorizado');
+            }
+            
+            if (isLocalFile) {
+                blockAccess('Arquivo local detectado');
+            }
+            
+            if (!checkIntegrity()) {
+                blockAccess('Integridade do arquivo comprometida');
+            }
+            
+            if (detectDevTools()) {
+                blockAccess('DevTools detectado');
+            }
+            
+            if (!verifyLocalStorage()) {
+                blockAccess('LocalStorage indisponível');
+            }
+            
+            // 8. Monitoramento contínuo
+            setInterval(() => {
+                if (detectDevTools()) {
+                    blockAccess('DevTools detectado durante execução');
+                }
+                if (!checkIntegrity()) {
+                    blockAccess('Integridade comprometida');
+                }
+            }, 1000);
+            
+            // 9. Proteção contra inspeção
+            Object.defineProperty(window, 'console', {
+                get() {
+                    blockAccess('Console detectado');
+                    return {};
+                }
             });
+            
+            // 10. Disable right-click
+            document.addEventListener('contextmenu', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }, true);
+            
+            // 11. Disable keyboard shortcuts
+            document.addEventListener('keydown', e => {
+                const forbidden = [
+                    { key: 'F12' },
+                    { ctrlKey: true, shiftKey: true, key: 'I' },
+                    { ctrlKey: true, shiftKey: true, key: 'C' },
+                    { ctrlKey: true, shiftKey: true, key: 'J' },
+                    { ctrlKey: true, key: 's' },
+                    { ctrlKey: true, key: 'u' },
+                    { ctrlKey: true, key: 'p' }
+                ];
+                
+                for (let cmd of forbidden) {
+                    let match = true;
+                    for (let key in cmd) {
+                        if (e[key] !== cmd[key]) {
+                            match = false;
+                            break;
+                        }
+                    }
+                    if (match) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+                }
+            }, true);
+            
+            // 12. Prevent copy/paste
+            ['copy', 'cut', 'paste'].forEach(event => {
+                document.addEventListener(event, e => {
+                    e.preventDefault();
+                    return false;
+                });
+            });
+            
+            // 13. Prevent iframe embedding
+            if (window !== window.parent) {
+                window.parent.location = window.location;
+            }
+            
+            // 14. Prevent window.open
+            window.open = () => null;
+            
+            // 15. Load real app
+            window.addEventListener('DOMContentLoaded', () => {
+                fetch('/app/index.html')
+                    .then(r => r.text())
+                    .then(html => {
+                        document.getElementById('app').innerHTML = html;
+                    })
+                    .catch(err => {
+                        blockAccess('Erro ao carregar aplicação');
+                    });
+            });
+            
+        })();
     </script>
 </body>
 </html>
